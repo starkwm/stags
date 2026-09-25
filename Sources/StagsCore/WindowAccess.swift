@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import CoreGraphics
+import StarkSkyLight
 
 @_silgen_name("_AXUIElementGetWindow")
 private func axWindowID(_ element: AXUIElement, _ identifier: inout UInt32) -> AXError
@@ -24,7 +25,9 @@ enum WindowAccess {
     return AXIsProcessTrustedWithOptions(options)
   }
 
-  static func discover() -> [WindowKey: ManagedWindow] {
+  static func discover(in activeSpace: SpaceID, using spaces: any SpaceQuerying)
+    -> [WindowKey: ManagedWindow]
+  {
     var result: [WindowKey: ManagedWindow] = [:]
     let currentPID = ProcessInfo.processInfo.processIdentifier
 
@@ -43,7 +46,9 @@ enum WindowAccess {
         AXUIElementSetMessagingTimeout(window, 0.25)
         var id: UInt32 = 0
         guard axWindowID(window, &id) == .success, id != 0 else { continue }
+        guard belongsToActiveSpace(id, activeSpace: activeSpace, using: spaces) else { continue }
         guard string(kAXRoleAttribute, of: window) == kAXWindowRole as String else { continue }
+        guard let frame = frame(of: window), frame.width > 0, frame.height > 0 else { continue }
         var movable = DarwinBoolean(false)
         guard
           AXUIElementIsAttributeSettable(window, kAXPositionAttribute as CFString, &movable)
@@ -60,6 +65,14 @@ enum WindowAccess {
     }
 
     return result
+  }
+
+  static func belongsToActiveSpace(
+    _ id: UInt32,
+    activeSpace: SpaceID,
+    using spaces: any SpaceQuerying
+  ) -> Bool {
+    (try? spaces.spaceIDs(containing: id).contains(activeSpace)) == true
   }
 
   static func focusedWindowID() -> UInt32? {

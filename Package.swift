@@ -6,7 +6,8 @@ let package = Package(
   platforms: [.macOS(.v26)],
   products: [.executable(name: "stags", targets: ["Stags"])],
   dependencies: [
-    .package(url: "https://github.com/starkwm/stark-ipc", from: "0.0.5")
+    .package(url: "https://github.com/starkwm/stark-ipc", from: "0.0.5"),
+    .package(url: "https://github.com/starkwm/stark-skylight", exact: "0.0.3"),
   ],
   targets: [
     .executableTarget(
@@ -15,9 +16,15 @@ let package = Package(
     ),
     .target(
       name: "StagsCore",
-      dependencies: [.product(name: "StarkIPC", package: "stark-ipc")]
+      dependencies: [
+        .product(name: "StarkIPC", package: "stark-ipc"),
+        .product(name: "StarkSkyLight", package: "stark-skylight"),
+      ]
     ),
-    .testTarget(name: "StagsCoreTests", dependencies: ["StagsCore"]),
+    .testTarget(
+      name: "StagsCoreTests",
+      dependencies: ["StagsCore", .product(name: "StarkSkyLight", package: "stark-skylight")]
+    ),
   ],
   swiftLanguageModes: [.v6]
 )
