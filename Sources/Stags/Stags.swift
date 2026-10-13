@@ -4,6 +4,20 @@ import StarkIPC
 
 @main
 struct Stags {
+  private static let usage = """
+    Usage: stags daemon [--socket PATH]
+           stags query [--socket PATH]
+           stags subscribe [--socket PATH]
+           stags view TAG... [--socket PATH]
+           stags view-toggle TAG [--socket PATH]
+           stags window set TAG... [--window ID] [--socket PATH]
+           stags window add TAG [--window ID] [--socket PATH]
+           stags window remove TAG [--window ID] [--socket PATH]
+           stags restore [--socket PATH]
+           stags stop [--socket PATH]
+           stags --version
+    """
+
   static func main() {
     do {
       try run(Array(CommandLine.arguments.dropFirst()))
@@ -20,6 +34,11 @@ struct Stags {
     }
     if command == "--help" || command == "help" {
       print(usage)
+      return
+    }
+    if command == "--version" {
+      guard arguments.count == 1 else { throw CLIError.invalidArguments }
+      print("stags version \(Version.current.value)")
       return
     }
 
@@ -90,18 +109,6 @@ struct Stags {
     } while streaming
   }
 
-  private static let usage = """
-    Usage: stags daemon [--socket PATH]
-           stags query [--socket PATH]
-           stags subscribe [--socket PATH]
-           stags view TAG... [--socket PATH]
-           stags view-toggle TAG [--socket PATH]
-           stags window set TAG... [--window ID] [--socket PATH]
-           stags window add TAG [--window ID] [--socket PATH]
-           stags window remove TAG [--window ID] [--socket PATH]
-           stags restore [--socket PATH]
-           stags stop [--socket PATH]
-    """
 }
 
 private enum CLIError: Error, LocalizedError {

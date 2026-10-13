@@ -13,6 +13,18 @@ make format  # Format Swift sources
 
 The executable is `.build/debug/stags`. `swift run stags daemon` builds and starts it in the foreground.
 
+## Version generation
+
+Generate the embedded version from `Sources/Stags/Version.swift.tmpl`:
+
+```sh
+make bump_version NEW_VERSION=vX.Y.Z
+make build
+.build/debug/stags --version
+```
+
+Replace `vX.Y.Z` with the selected version. Commit the generated `Sources/Stags/Version.swift` with the bump. The version command exits without starting a daemon or opening its control socket.
+
 ## Source layout
 
 `Sources/Stags/Stags.swift` parses commands and uses StarkIPC to talk to the daemon. `Sources/StagsCore/TagState.swift` owns tag membership and view rules. `TagDaemon.swift` polls the active Space, handles commands, moves windows, and publishes snapshots. `WindowAccess.swift` reads Accessibility windows. `ParkingGeometry.swift` picks a display edge, and `ParkingJournal.swift` saves original frames for recovery.

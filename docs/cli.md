@@ -4,6 +4,8 @@
 
 Run `stags help` or `stags --help` to print usage. Running `stags` without a command also prints usage.
 
+Run `stags --version` to print the embedded version and exit without starting a daemon or connecting to its socket.
+
 | Command | Action |
 | --- | --- |
 | `daemon` | Start the foreground daemon. |
@@ -16,8 +18,9 @@ Run `stags help` or `stags --help` to print usage. Running `stags` without a com
 | `window remove TAG` | Remove a tag from a window. |
 | `restore` | Show all known tags and restore parked windows in the active Space. |
 | `stop` | Restore parked windows, then stop the daemon if restoration succeeds. |
+| `--version` | Print the embedded binary version and exit. |
 
-Client commands need a running daemon. Each command accepts `--socket PATH` to use a different control socket. The default is `~/.config/stags/control.sock`. Pass the same path to `daemon` and its clients:
+Client commands need a running daemon. The daemon and client commands accept `--socket PATH` to use a different control socket. The default is `~/.config/stags/control.sock`. Pass the same path to `daemon` and its clients:
 
 ```sh
 stags daemon --socket /tmp/stags-test.sock
