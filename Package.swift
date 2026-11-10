@@ -12,8 +12,7 @@ let package = Package(
   targets: [
     .executableTarget(
       name: "Stags",
-      dependencies: ["StagsCore", .product(name: "StarkIPC", package: "stark-ipc")],
-      exclude: ["Version.swift.tmpl"]
+      dependencies: ["StagsCore", .product(name: "StarkIPC", package: "stark-ipc")]
     ),
     .target(
       name: "StagsCore",
