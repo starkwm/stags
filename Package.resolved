@@ -1,13 +1,13 @@
 {
-  "originHash" : "50982a16db500d4edf26c506290c72728bd0e19093ccda080eafc2a284f35c1d",
+  "originHash" : "a0eb5ec6cf74ae8c629fa46ed40293aa072bf2c971fda7a55eafc8b75e67bba9",
   "pins" : [
     {
       "identity" : "stark-ipc",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/starkwm/stark-ipc",
       "state" : {
-        "revision" : "cd2a30196dd647483907be5574baef704df79665",
-        "version" : "0.0.5"
+        "revision" : "c40ff4976e2635f65208ea2815747920098a7fb2",
+        "version" : "0.0.6"
       }
     },
     {
