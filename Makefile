@@ -1,5 +1,10 @@
+TEST_ARGS ?=
+
 build:
 	@swift build
+
+release:
+	@swift build --configuration release --disable-sandbox
 
 format:
 	@swift format format -r -i Sources Tests Package.swift
@@ -8,7 +13,10 @@ lint:
 	@swift format lint --strict -r Sources Tests Package.swift
 
 test:
-	@swift test
+	@swift test $(TEST_ARGS)
+
+clean:
+	@swift package clean
 
 .DEFAULT_GOAL := build
-.PHONY: build format lint test
+.PHONY: build release format lint test clean

@@ -5,11 +5,15 @@
 Run these commands from the repository root:
 
 ```sh
-make build   # Debug build
-make test    # Swift tests
-make lint    # Check Swift formatting
-make format  # Format Swift sources
+make build    # Debug build
+make release  # Optimized build
+make test     # Swift tests
+make lint     # Check Swift formatting
+make format   # Format Swift sources
+make clean    # Remove build products
 ```
+
+To run one suite, use `make test TEST_ARGS='--filter TagStateTests'`.
 
 The executable is `.build/debug/stags`. `swift run stags daemon` builds and starts it in the foreground.
 
