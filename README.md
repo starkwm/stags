@@ -6,7 +6,7 @@ Window tags for macOS.
 
 ## Quick start
 
-Requires macOS 26 or later, Swift 6.2 or later to build, and Accessibility permission for `stags`.
+Requires macOS 26 or later, Swift 6.4 or later to build, and Accessibility permission for `stags`.
 
 ```sh
 make build
