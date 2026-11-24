@@ -21,9 +21,14 @@ let package = Package(
         .product(name: "StarkSkyLight", package: "stark-skylight"),
       ]
     ),
+    .testTarget(name: "StagsTests", dependencies: ["Stags"]),
     .testTarget(
       name: "StagsCoreTests",
-      dependencies: ["StagsCore", .product(name: "StarkSkyLight", package: "stark-skylight")]
+      dependencies: [
+        "StagsCore",
+        .product(name: "StarkIPC", package: "stark-ipc"),
+        .product(name: "StarkSkyLight", package: "stark-skylight"),
+      ]
     ),
   ],
   swiftLanguageModes: [.v6]

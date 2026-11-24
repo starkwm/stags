@@ -7,7 +7,29 @@ import StarkSkyLight
 private func axWindowID(_ element: AXUIElement, _ identifier: inout UInt32) -> AXError
 
 @MainActor
-struct ManagedWindow {
+protocol ManagedWindow {
+  var key: WindowKey { get }
+  var bundleID: String { get }
+  var appName: String { get }
+  var frame: CGRect? { get }
+  var isMinimized: Bool { get }
+  var isFullscreen: Bool { get }
+  func move(to point: CGPoint) -> Bool
+  func focus()
+}
+
+@MainActor
+protocol WindowEnvironment {
+  func discover(in activeSpace: SpaceID, using spaces: any SpaceQuerying)
+    -> [WindowKey: any ManagedWindow]
+  func liveWindowIDs() -> Set<UInt32>?
+  func isRunning(pid: Int32) -> Bool
+  func focusedWindowID() -> UInt32?
+  func screenFrames() -> [CGRect]
+}
+
+@MainActor
+private struct AccessibilityWindow: ManagedWindow {
   let key: WindowKey
   let bundleID: String
   let appName: String
@@ -16,19 +38,31 @@ struct ManagedWindow {
   var frame: CGRect? { WindowAccess.frame(of: element) }
   var isMinimized: Bool { WindowAccess.bool(kAXMinimizedAttribute, of: element) ?? false }
   var isFullscreen: Bool { WindowAccess.bool("AXFullScreen", of: element) ?? false }
+
+  func move(to point: CGPoint) -> Bool {
+    var point = point
+    guard let value = AXValueCreate(.cgPoint, &point) else { return false }
+    return AXUIElementSetAttributeValue(element, kAXPositionAttribute as CFString, value)
+      == .success
+  }
+
+  func focus() {
+    NSRunningApplication(processIdentifier: key.pid)?.activate()
+    AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+  }
 }
 
 @MainActor
-enum WindowAccess {
+struct WindowAccess: WindowEnvironment {
   static func requestTrust() -> Bool {
     let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
     return AXIsProcessTrustedWithOptions(options)
   }
 
-  static func discover(in activeSpace: SpaceID, using spaces: any SpaceQuerying)
-    -> [WindowKey: ManagedWindow]
+  func discover(in activeSpace: SpaceID, using spaces: any SpaceQuerying)
+    -> [WindowKey: any ManagedWindow]
   {
-    var result: [WindowKey: ManagedWindow] = [:]
+    var result: [WindowKey: any ManagedWindow] = [:]
     let currentPID = ProcessInfo.processInfo.processIdentifier
 
     for app in NSWorkspace.shared.runningApplications where app.processIdentifier != currentPID {
@@ -46,16 +80,20 @@ enum WindowAccess {
         AXUIElementSetMessagingTimeout(window, 0.25)
         var id: UInt32 = 0
         guard axWindowID(window, &id) == .success, id != 0 else { continue }
-        guard belongsToActiveSpace(id, activeSpace: activeSpace, using: spaces) else { continue }
-        guard string(kAXRoleAttribute, of: window) == kAXWindowRole as String else { continue }
-        guard let frame = frame(of: window), frame.width > 0, frame.height > 0 else { continue }
+        guard Self.belongsToActiveSpace(id, activeSpace: activeSpace, using: spaces) else {
+          continue
+        }
+        guard Self.string(kAXRoleAttribute, of: window) == kAXWindowRole as String else { continue }
+        guard let frame = Self.frame(of: window), frame.width > 0, frame.height > 0 else {
+          continue
+        }
         var movable = DarwinBoolean(false)
         guard
           AXUIElementIsAttributeSettable(window, kAXPositionAttribute as CFString, &movable)
             == .success, movable.boolValue
         else { continue }
         let key = WindowKey(pid: app.processIdentifier, id: id)
-        result[key] = ManagedWindow(
+        result[key] = AccessibilityWindow(
           key: key,
           bundleID: app.bundleIdentifier ?? "",
           appName: app.localizedName ?? "",
@@ -75,7 +113,7 @@ enum WindowAccess {
     (try? spaces.spaceIDs(containing: id).contains(activeSpace)) == true
   }
 
-  static func focusedWindowID() -> UInt32? {
+  func focusedWindowID() -> UInt32? {
     guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
     let application = AXUIElementCreateApplication(app.processIdentifier)
     AXUIElementSetMessagingTimeout(application, 0.25)
@@ -112,16 +150,20 @@ enum WindowAccess {
     return CGRect(origin: point, size: dimensions)
   }
 
-  static func move(_ element: AXUIElement, to point: CGPoint) -> Bool {
-    var point = point
-    guard let value = AXValueCreate(.cgPoint, &point) else { return false }
-    return AXUIElementSetAttributeValue(element, kAXPositionAttribute as CFString, value)
-      == .success
+  func screenFrames() -> [CGRect] {
+    let mainTop = NSScreen.screens.first?.frame.maxY ?? 0
+    return NSScreen.screens.map {
+      ParkingGeometry.axFrame(for: $0.frame, mainDisplayTop: mainTop)
+    }
   }
 
-  static func focus(_ window: ManagedWindow) {
-    NSRunningApplication(processIdentifier: window.key.pid)?.activate()
-    AXUIElementPerformAction(window.element, kAXRaiseAction as CFString)
+  func liveWindowIDs() -> Set<UInt32>? {
+    (CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]])
+      .map { Set($0.compactMap { ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value }) }
+  }
+
+  func isRunning(pid: Int32) -> Bool {
+    NSRunningApplication(processIdentifier: pid) != nil
   }
 
   static func bool(_ attribute: String, of element: AXUIElement) -> Bool? {
