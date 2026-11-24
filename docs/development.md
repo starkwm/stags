@@ -26,12 +26,12 @@ Commit `Sources/Stags/Version.swift` with the bump. The version command exits wi
 
 ## Source layout
 
-`Sources/Stags/Stags.swift` parses commands and uses StarkIPC to talk to the daemon. `Sources/StagsCore/TagState.swift` owns tag membership and view rules. `TagDaemon.swift` polls the active Space, handles commands, moves windows, and publishes snapshots. `WindowAccess.swift` reads Accessibility windows. `ParkingGeometry.swift` picks a display edge, and `ParkingJournal.swift` saves original frames for recovery.
+`CLICommand.swift` parses command-line arguments into local actions or StarkIPC requests. `Stags.swift` runs those actions and prints responses. `TagDaemon.swift` owns the control socket, subscriptions, polling timer, and shutdown. `TagCommandDispatcher.swift` handles requests, polls the active Space, and reconciles windows with the selected view. `TagState.swift` owns tag membership and view rules. `WindowAccess.swift` discovers, moves, and focuses Accessibility windows. `ParkingGeometry.swift` picks a display edge, and `ParkingJournal.swift` saves original frames for recovery.
 
 `StarkSkyLight` supplies Space queries. The executable uses StarkIPC for its local socket and messages. The daemon checks the active Space before changing a window so a stale ID from another Space cannot be used.
 
 ## Tests and desktop checks
 
-The tests cover tag membership, multi-tag views, active Space checks, parking geometry, and the recovery journal. They do not prove that a particular application will accept an Accessibility move.
+The tests cover CLI parsing, socket subscriptions, tag membership, multi-tag views, Space changes during polling, parking geometry, and retrying a failed stop with its recovery journal. They do not prove that a particular application will accept an Accessibility move.
 
 For a desktop check, run the daemon with Accessibility permission, switch between macOS Spaces, try `view` and `window` commands on ordinary windows, and inspect `query` after each move. Check `restore`, `stop`, Ctrl+C, and restart with a parked window. Include more than one display if you rely on that setup. Native fullscreen, minimized windows, and `swm` automatic tiling need separate attention because they do not follow the ordinary parking path.
