@@ -5,7 +5,7 @@
 ## Requirements
 
 - macOS 26 or later
-- Swift 6.2 or later to build from source
+- Swift 6.4 or later to build from source
 - Accessibility permission for the `stags` executable
 - A logged-in desktop session with ordinary application windows
 
